@@ -2,6 +2,15 @@
 
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
+def add_header_names(filename,headers):
+# Input: filename - string containing the path+filename
+#        headers - a list of strings where each element is string and corresponds
+#                  to a column header
+    with open(filename, 'wb') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames = headers, delimiter = ';')
+        writer.writeheader()
+
+#******************************************************************************
 def fft_shaker(Ts,y):
     ''' A customized FFT using known algorithms but tailored to the data needs of
     the project.
