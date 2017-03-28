@@ -1,5 +1,5 @@
 '''Module definition for data analysis of the energy harvesting project '''
-
+import csv as csv
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
 def add_header_names(filename,headers):
@@ -7,7 +7,7 @@ def add_header_names(filename,headers):
 #        headers - a list of strings where each element is string and corresponds
 #                  to a column header
     with open(filename, 'wb') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames = headers, delimiter = ';')
+        writer = csv.DictWriter(csvfile, fieldnames = headers, delimiter = '\t')
         writer.writeheader()
 
 #******************************************************************************
