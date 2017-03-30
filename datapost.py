@@ -1,15 +1,45 @@
 '''Module definition for data analysis of the energy harvesting project '''
 import csv as csv
+import pandas as pd
+import numpy as np
+
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
-def add_header_names(filename,headers):
-# Input: filename - string containing the path+filename
+def read_files_into_data_frames(filename,headers,Fs):
+# Input: filename - list of strings with the names each file
 #        headers - a list of strings where each element is string and corresponds
-#                  to a column header
-    with open(filename, 'wb') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames = headers, delimiter = '\t')
-        writer.writeheader()
+#                  to the column header of the summary file
+# Return: - the three dataframes with the modifications such as time column for the time-series
+#           and the headers for the summary
 
+    # for the summary file, only the setting for the speed in v_dc will be included in the dataframe
+    summary_df = pd.read_table(filename[0], sep = '\t', names = headers, usecols = ['vdc'])
+    eh_ts_df = pd.read_table(filename[1], sep = '\t', header = None)
+    pzt_ts_df = pd.read_table(filename[2], sep = '\t', header = None)
+
+    # Adding the time column to the time-series dataframes
+    NoSamples = len(eh_ts_df.index)
+    eh_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+    NoSamples = len(pzt_ts_df.index)
+    pzt_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+    # Adding additional columns for units of speed in the summary dataframe
+    summary_df["rpm"] = summary_df["vdc"]*125.0
+    summary_df["rad/s"] = summary_df["rpm"]*(0.104719755)
+    summary_df["hz"] = summary_df["rpm"]*(1/60.0)
+
+    return summary_df,eh_ts_df,pzt_ts_df
+#******************************************************************************
+def get_rms_power(dataframe,rl):
+    num_cols = len(dataframe.columns) - 1   # -1 because the time column is present
+    new_col_index = num_cols - 1    # because the index starts in 0
+
+    for col in dataframe:
+        dataframe[new_col_index] = (dataframe[col]**2)/rl
+        new_col_index = new_col_index + 1
+
+    return dataframe
 #******************************************************************************
 def fft_shaker(Ts,y):
     ''' A customized FFT using known algorithms but tailored to the data needs of
