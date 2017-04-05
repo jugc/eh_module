@@ -16,7 +16,7 @@ The class `HEH_dataset` (Hybrid Energy Harvester dataset) contains properties an
 * `__init__`: initializes the instance of this class. The arguments it takes are the name and folder for the experiment. It also initializes the rest of properties, e.g. the empty list that will contain the max values of the MFC voltage.
 * `save_in_list`: finds the files in a given folder, and saves the names in a list. This method is used in `read_into_dataframes`, so it is not necessary to call it.
 * `read_into_dataframes`: uses the list of filenames, and reads the data into panda dataframes. This method takes into account the file type (whether is a time-series or not) and assigns the appropriate headings to the dataframes.
-* `add_time_column`: using information about the data collection time and the sampling time, it assigns the corresponding time column to the time series data.
+* `add_time_column`: using information about the data collection time and the sampling rate, it assigns the corresponding time column to the time series data.
 * `eh_stats`: finds the max and min values for voltage and power for both energy harvesters. It also defines the speed vector, where each entry is the corresponding speed of a test. This is calculated as the mean over the last half of the data, in order to avoid misleading data due to adjustment of the system. The same is true for the rest of the stats calculated in this method.
 
 **NOTE:** there will be an instance of a class created for each experiment. One of the properties of the class is `dataframes`, and it holds all the data frames that are created for each test.

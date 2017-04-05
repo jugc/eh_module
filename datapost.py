@@ -41,6 +41,9 @@ def get_rms_power(dataframe,rl):
 
     return dataframe
 #******************************************************************************
+def collect_stats(dataframes):
+    return True
+#******************************************************************************
 def fft_shaker(Ts,y):
     ''' A customized FFT using known algorithms but tailored to the data needs of
     the project.

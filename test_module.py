@@ -16,3 +16,5 @@ pzt_ts_df = dp.get_rms_power(pzt_ts_df,rl_pzt)
 
 print summary_df.head()
 print eh_ts_df.head()
+
+print len(eh_ts_df.columns)
