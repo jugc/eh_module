@@ -98,7 +98,7 @@ def rpm2hz(X):
 
 #---------------------------- Class definition ---------------------------------
 class HEH_dataset:
-    def __init__(self,NAME,FOLDER,rl_mfc,rl_eh):
+    def __init__(self,NAME,FOLDER,rl_mfc,rl_vem,rl_buzzer,r_deh):
         self.data    = []
         self.name    = NAME
         self.folder  = FOLDER
@@ -115,13 +115,28 @@ class HEH_dataset:
         self.min_power_mfc   = []
         self.min_voltage_mfc = []
         self.rl_mfc          = rl_mfc
-        self.rl_eh           = rl_eh
+        self.rl_vem          = rl_vem
+        self.rl_buzer        = rl_buzzer
+        self.rl_deh          = rl_deh
+        self.testlist        = []
 
     def save_in_list(self):
         self.filelist = [f for f in listdir(self.folder) if isfile(join(self.folder, f))]
 
     def read_into_dataframes(self):
         self.save_in_list()
+        
+        for item in range(0,len(self.filelist)):
+        # if the file name contains the word voltage, then it corresponds to a voltage time series
+            tmp_filename = self.filelist[item]
+            if check_filename(tmp_filename,'summary'):
+                # loads the time-series data
+                df_summary_dummy = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
+                num_of_exp = len(df_summary_dummy['vdc'])
+                a = range(1,num_of_exp+1)
+                headers = ['v_' + str(s) for s in a]
+
+
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
