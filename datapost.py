@@ -2,7 +2,8 @@
 import csv as csv
 import pandas as pd
 import numpy as np
-
+from os import listdir
+from os.path import isfile, join
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
 def read_files_into_data_frames(filename,headers,Fs):
@@ -14,22 +15,31 @@ def read_files_into_data_frames(filename,headers,Fs):
 
     # for the summary file, only the setting for the speed in v_dc will be included in the dataframe
     summary_df = pd.read_table(filename[0], sep = '\t', names = headers, usecols = ['vdc'])
-    eh_ts_df = pd.read_table(filename[1], sep = '\t', header = None)
-    pzt_ts_df = pd.read_table(filename[2], sep = '\t', header = None)
+    buzzer_ts_df = pd.read_table(filename[1], sep = '\t', header = None)
+    vem_ts_df = pd.read_table(filename[2], sep = '\t', header = None)
+    mfc_ts_df = pd.read_table(filename[3], sep = '\t', header = None)
+    dem_ts_df = pd.read_table(filename[4], sep = '\t', header = None)
 
     # Adding the time column to the time-series dataframes
-    NoSamples = len(eh_ts_df.index)
-    eh_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+    NoSamples = len(buzzer_ts_df.index)
+    buzzer_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
 
-    NoSamples = len(pzt_ts_df.index)
-    pzt_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+    NoSamples = len(vem_ts_df.index)
+    vem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+    NoSamples = len(mfc_ts_df.index)
+    mfc_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+    NoSamples = len(dem_ts_df.index)
+    dem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
 
     # Adding additional columns for units of speed in the summary dataframe
     summary_df["rpm"] = summary_df["vdc"]*125.0
     summary_df["rad/s"] = summary_df["rpm"]*(0.104719755)
     summary_df["hz"] = summary_df["rpm"]*(1/60.0)
 
-    return summary_df,eh_ts_df,pzt_ts_df
+    return summary_df,buzzer_ts_df,vem_ts_df,mfc_ts_df,dem_ts_df
+    #,
 #******************************************************************************
 def get_rms_power(dataframe,rl):
     num_cols = len(dataframe.columns) - 1   # -1 because the time column is present
