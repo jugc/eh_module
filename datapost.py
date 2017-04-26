@@ -125,18 +125,23 @@ class HEH_dataset:
 
     def read_into_dataframes(self):
         self.save_in_list()
-        
+
+        # Dummy for loop that finds a summary file from the dataset in order to create the list of tests carried out during the experiment
+        # These correspond to the speeds of the motor in VDC
         for item in range(0,len(self.filelist)):
-        # if the file name contains the word voltage, then it corresponds to a voltage time series
+        # if the file name contains the word s, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
             if check_filename(tmp_filename,'summary'):
                 # loads the time-series data
-                df_summary_dummy = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
+                df_summary_dummy = pd.DataFrame(tmp_list)     # create a dummy dataframe with the summary data
                 num_of_exp = len(df_summary_dummy['vdc'])
                 a = range(1,num_of_exp+1)
-                headers = ['v_' + str(s) for s in a]
+                self.testlist = ['v_' + str(s) for s in a]
+                del df_summara_dummy
+                break
 
-
+        # This loop adds opens each time-series file and saves it into a dataframe with the headers in slef.testlist
+        # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
@@ -144,11 +149,10 @@ class HEH_dataset:
                 # loads the time-series data
                 tmp_list = load_ts_files(self.folder+self.filelist[item])
                 df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
-                df.columns = ['voltage(v)']     # add the name voltage to the dataframe.
+                df.columns = self.testlist     # add the name voltage to the dataframe.
                 self.dataframes.append(df)           #
-                self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
-                # I noticed some of the data points are missing, so an interpolation is performed to fill in the gaps
-                self.dataframes[item]['voltage(v)'] = self.dataframes[item]['voltage(v)'].interpolate()
+                #self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
+
             else:
                 self.dataframes.append(pd.read_table(self.folder+self.filelist[item], sep='\t',
                           names = ["time(s)", "voltage_eh(v)", "power(mw)", "position(mm)","velocity(RPM)","velocity(VDC)",
