@@ -98,7 +98,7 @@ def rpm2hz(X):
 
 #---------------------------- Class definition ---------------------------------
 class HEH_dataset:
-    def __init__(self,NAME,FOLDER,rl_mfc,rl_vem,rl_buzzer,r_deh):
+    def __init__(self,NAME,FOLDER,rl_mfc,rl_vem,rl_buzzer,rl_dem):
         self.data    = []
         self.name    = NAME
         self.folder  = FOLDER
@@ -117,8 +117,9 @@ class HEH_dataset:
         self.rl_mfc          = rl_mfc
         self.rl_vem          = rl_vem
         self.rl_buzer        = rl_buzzer
-        self.rl_deh          = rl_deh
+        self.rl_dem          = rl_dem
         self.testlist        = []
+        self.dummy_summary_headers = ["col_1","col_2","col_3","col_1","col_2","vdc","col_7"]
 
     def save_in_list(self):
         self.filelist = [f for f in listdir(self.folder) if isfile(join(self.folder, f))]
@@ -130,14 +131,18 @@ class HEH_dataset:
         # These correspond to the speeds of the motor in VDC
         for item in range(0,len(self.filelist)):
         # if the file name contains the word s, then it corresponds to a voltage time series
-            tmp_filename = self.filelist[item]
+            tmp_filename = self.folder+self.filelist[item]
+            print tmp_filename
             if check_filename(tmp_filename,'summary'):
-                # loads the time-series data
-                df_summary_dummy = pd.DataFrame(tmp_list)     # create a dummy dataframe with the summary data
+                df_summary_dummy = pd.read_table(tmp_filename, sep = '\t', names = self.dummy_summary_headers, usecols = ['vdc'])
+                self.exp_speeds_vdc = df_summary_dummy["vdc"]
+                self.exp_speeds_rpm = df_summary_dummy["vdc"]*125.0
+                self.exp_speeds_radsec = self.exp_speeds_rpm*(0.104719755)
+                self.exp_speeds_hz = self.exp_speeds_rpm*(1/60.0)
                 num_of_exp = len(df_summary_dummy['vdc'])
                 a = range(1,num_of_exp+1)
                 self.testlist = ['v_' + str(s) for s in a]
-                del df_summara_dummy
+                del df_summary_dummy
                 break
 
         # This loop adds opens each time-series file and saves it into a dataframe with the headers in slef.testlist
@@ -147,16 +152,19 @@ class HEH_dataset:
             tmp_filename = self.filelist[item]
             if check_filename(tmp_filename,'voltage'):
                 # loads the time-series data
-                tmp_list = load_ts_files(self.folder+self.filelist[item])
-                df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
-                df.columns = self.testlist     # add the name voltage to the dataframe.
+                #tmp_list = load_ts_files(self.folder+self.filelist[item])
+                #df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
+                df = pd.read_table(self.folder+self.filelist[item], sep = '\t', header = None)
+
+                #df.columns = self.testlist     # add the name voltage to the dataframe.
                 self.dataframes.append(df)           #
                 #self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
-
+            '''
             else:
                 self.dataframes.append(pd.read_table(self.folder+self.filelist[item], sep='\t',
                           names = ["time(s)", "voltage_eh(v)", "power(mw)", "position(mm)","velocity(RPM)","velocity(VDC)",
                                    "voltage_mfc(v)"]))
+            '''
 
     def add_time_column(self):
         #  Add a time column into the data frames that contain de time-series of the voltage from the EH
