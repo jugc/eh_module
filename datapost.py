@@ -151,27 +151,27 @@ class HEH_dataset:
                 del df_summary_dummy
                 break
 
-        # This loop adds opens each time-series file and saves it into a dataframe with the headers in slef.testlist
+        # This loop opens each time-series file and saves it into a dataframe with the headers in slef.testlist
         # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
-            if check_filename(tmp_filename,'mama'):
+            if check_filename(tmp_filename,'MFC'):
                 # loads the time-series data
                 #tmp_list = load_ts_files(self.folder+self.filelist[item])
                 #df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
-                df = pd.read_table(self.folder+self.filelist[item], sep = '\t', header = None)
+                df = pd.read_table(self.folder+self.filelist[item], sep = '\t', names = self.testlist)
 
                 #df.columns = self.testlist     # add the name voltage to the dataframe.
                 self.dataframes.append(df)      #
                 #self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
 
-            elif check_filename(tmp_filename,'buzzer'):
+            elif check_filename(tmp_filename,'mama'):
 
                 f = self.folder+self.filelist[item]
-                self.df_buzzer = pd.concat((pd.read_table(f, sep = '\t', header = None) ))
+                #self.df_buzzer = pd.concat((pd.read_table(f, sep = '\t', header = None) ))
 
-            
+
 
     def add_time_column(self):
         #  Add a time column into the data frames that contain de time-series of the voltage from the EH
