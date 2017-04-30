@@ -156,15 +156,10 @@ class HEH_dataset:
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
-            if check_filename(tmp_filename,'MFC'):
+            if check_filename(tmp_filename,'MFC_'):
                 # loads the time-series data
-                #tmp_list = load_ts_files(self.folder+self.filelist[item])
-                #df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
                 df = pd.read_table(self.folder+self.filelist[item], sep = '\t', names = self.testlist)
-
-                #df.columns = self.testlist     # add the name voltage to the dataframe.
                 self.dataframes.append(df)      #
-                #self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
 
             elif check_filename(tmp_filename,'mama'):
 
