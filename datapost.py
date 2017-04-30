@@ -104,8 +104,11 @@ class HEH_dataset:
         self.folder  = FOLDER
         self.filelist = []
         self.dataframes = []
+        self.df_buzzer = pd.DataFrame()
         self.exp_speeds_rpm  = []
         self.exp_speeds_vdc  = []
+        self.exp_speeds_hz   = []
+        self.exp_speeds_radsec  = []
         self.max_power_eh    = []
         self.max_voltage_eh  = []
         self.min_power_eh    = []
@@ -122,9 +125,12 @@ class HEH_dataset:
         self.dummy_summary_headers = ["col_1","col_2","col_3","col_1","col_2","vdc","col_7"]
 
     def save_in_list(self):
+        # creates a list with all the file names in the dataset folder
         self.filelist = [f for f in listdir(self.folder) if isfile(join(self.folder, f))]
 
     def read_into_dataframes(self):
+        # This method reads each file into a data frame. Then, concatenates each dataframe type (buzzer,mfc,vem,dem)
+        # into one big dataframe.
         self.save_in_list()
 
         # Dummy for loop that finds a summary file from the dataset in order to create the list of tests carried out during the experiment
@@ -150,21 +156,22 @@ class HEH_dataset:
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
-            if check_filename(tmp_filename,'voltage'):
+            if check_filename(tmp_filename,'mama'):
                 # loads the time-series data
                 #tmp_list = load_ts_files(self.folder+self.filelist[item])
                 #df = pd.DataFrame(tmp_list)     # create a data frame with the time-series data
                 df = pd.read_table(self.folder+self.filelist[item], sep = '\t', header = None)
 
                 #df.columns = self.testlist     # add the name voltage to the dataframe.
-                self.dataframes.append(df)           #
+                self.dataframes.append(df)      #
                 #self.dataframes[item]['voltage(v)'] = pd.to_numeric(self.dataframes[item]['voltage(v)'], errors='coerce')
-            '''
-            else:
-                self.dataframes.append(pd.read_table(self.folder+self.filelist[item], sep='\t',
-                          names = ["time(s)", "voltage_eh(v)", "power(mw)", "position(mm)","velocity(RPM)","velocity(VDC)",
-                                   "voltage_mfc(v)"]))
-            '''
+
+            elif check_filename(tmp_filename,'buzzer'):
+
+                f = self.folder+self.filelist[item]
+                self.df_buzzer = pd.concat((pd.read_table(f, sep = '\t', header = None) ))
+
+            
 
     def add_time_column(self):
         #  Add a time column into the data frames that contain de time-series of the voltage from the EH
