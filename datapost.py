@@ -3,6 +3,7 @@ import csv as csv
 import pandas as pd
 import numpy as np
 from os import listdir
+import fnmatch
 from os.path import isfile, join
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
@@ -78,12 +79,11 @@ def fft_shaker(Ts,y):
     return frq_Y,Y,frq_Pxx,Pxx
 #******************************************************************************
 def check_filename(filename,word):
+    if fnmatch.fnmatch(filename, '*_'+word+'*.txt'):
+        return True
+    else:
+        return False
 
-    for i in word:
-        if i in filename:
-            return True
-        else:
-            return False
 #******************************************************************************
 def load_ts_files(filename):
     text_file = open(filename, "r")
@@ -156,9 +156,10 @@ class HEH_dataset:
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
-            if check_filename(tmp_filename,'MFC_'):
+            if check_filename(tmp_filename,'MFC'):
                 # loads the time-series data
-                df = pd.read_table(self.folder+self.filelist[item], sep = '\t', names = self.testlist)
+                print tmp_filename
+                df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
                 self.dataframes.append(df)      #
 
             elif check_filename(tmp_filename,'mama'):
