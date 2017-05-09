@@ -95,9 +95,6 @@ def rpm2hz(X):
     V = X/60
     return ["%.1f" % z for z in V]
 #******************************************************************************
-#******************************************************************************
-
-#******************************************************************************
 
 #---------------------------- Class definition ---------------------------------
 class HEH_dataset:
@@ -129,9 +126,10 @@ class HEH_dataset:
         self.min_voltage_mfc = []
         self.rl_mfc          = rl_mfc
         self.rl_vem          = rl_vem
-        self.rl_buzer        = rl_buzzer
+        self.rl_buzzer        = rl_buzzer
         self.rl_dem          = rl_dem
         self.testlist        = []
+        self.power_col_labels= []
         self.dummy_summary_headers = ["col_1","col_2","col_3","col_1","col_2","vdc","col_7"]
 
     def save_in_list(self):
@@ -158,6 +156,7 @@ class HEH_dataset:
                 num_of_exp = len(df_summary_dummy['vdc'])
                 a = range(1,num_of_exp+1)
                 self.testlist = ['v_' + str(s) for s in a]
+                self.power_col_labels = ['p_' + str(s) for s in a]
                 del df_summary_dummy
                 break
 
@@ -165,16 +164,19 @@ class HEH_dataset:
         # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
         self.df_dummy_mfc = self.append_df_to_list('MFC')
         self.df_mfc = pd.concat(self.df_dummy_mfc)
+        self.get_rms_power_2(self.df_mfc,self.rl_mfc)
 
         self.df_dummy_buzzer = self.append_df_to_list('buzzer')
         self.df_buzzer = pd.concat(self.df_dummy_buzzer)
+        self.get_rms_power_2(self.df_buzzer,self.rl_buzzer)
 
         self.df_dummy_dem = self.append_df_to_list('DEM')
         self.df_dem = pd.concat(self.df_dummy_dem)
+        self.get_rms_power_2(self.df_dem,self.rl_dem)
 
         self.df_dummy_vem = self.append_df_to_list('VEM')
         self.df_vem = pd.concat(self.df_dummy_vem)
-
+        self.get_rms_power_2(self.df_vem,self.rl_vem)
 
     def append_df_to_list(self,NAME_EH):
         dummy_list = []
@@ -189,7 +191,33 @@ class HEH_dataset:
 
         return dummy_list
 
+    def get_rms_power_2(self,dataframe,rl):
+        num_cols = len(dataframe.columns)
+
+        new_col_index = num_cols - 1    # because the index starts in 0
+        power_col_index = 0
+
+        for col in dataframe:
+            dataframe[new_col_index] = (dataframe[col]**2)/rl
+            # Renaming the default column name given
+            dataframe.rename(columns={new_col_index: self.power_col_labels[power_col_index]}, inplace=True)
+            new_col_index = new_col_index + 1
+            power_col_index = power_col_index + 1
+        
+
     def add_time_column(self):
+        NoSamples = len(buzzer_ts_df.index)
+        buzzer_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+        NoSamples = len(vem_ts_df.index)
+        vem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+        NoSamples = len(mfc_ts_df.index)
+        mfc_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+
+        NoSamples = len(dem_ts_df.index)
+        dem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
+        '''
         #  Add a time column into the data frames that contain de time-series of the voltage from the EH
         for item in range(0,len(self.filelist)):
             if not check_filename(self.filelist[item],'voltage'):
@@ -197,7 +225,7 @@ class HEH_dataset:
             else:
                 self.dataframes[item].describe()
                 self.dataframes[item]["time(s)"] = np.linspace(0, tmp_time, num=len(self.dataframes[item]["voltage(v)"]))
-
+'''
     def eh_stats(self):
         no_files = len(self.filelist)
         self.exp_speeds_rpm  = np.empty(no_files/3)
