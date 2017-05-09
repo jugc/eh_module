@@ -95,6 +95,9 @@ def rpm2hz(X):
     V = X/60
     return ["%.1f" % z for z in V]
 #******************************************************************************
+#******************************************************************************
+
+#******************************************************************************
 
 #---------------------------- Class definition ---------------------------------
 class HEH_dataset:
@@ -160,21 +163,31 @@ class HEH_dataset:
 
         # This loop opens each time-series file and saves it into a dataframe with the headers in slef.testlist
         # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
+        self.df_dummy_mfc = self.append_df_to_list('MFC')
+        self.df_mfc = pd.concat(self.df_dummy_mfc)
+
+        self.df_dummy_buzzer = self.append_df_to_list('buzzer')
+        self.df_buzzer = pd.concat(self.df_dummy_buzzer)
+
+        self.df_dummy_dem = self.append_df_to_list('DEM')
+        self.df_dem = pd.concat(self.df_dummy_dem)
+
+        self.df_dummy_vem = self.append_df_to_list('VEM')
+        self.df_vem = pd.concat(self.df_dummy_vem)
+
+
+    def append_df_to_list(self,NAME_EH):
+        dummy_list = []
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
-            if check_filename(tmp_filename,'MFC'):
+            if check_filename(tmp_filename,NAME_EH):
                 # loads the time-series data
                 print tmp_filename
                 df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
-                self.dataframes.append(df)      #
+                dummy_list.append(df)      #
 
-            elif check_filename(tmp_filename,'mama'):
-
-                f = self.folder+self.filelist[item]
-                #self.df_buzzer = pd.concat((pd.read_table(f, sep = '\t', header = None) ))
-
-
+        return dummy_list
 
     def add_time_column(self):
         #  Add a time column into the data frames that contain de time-series of the voltage from the EH
