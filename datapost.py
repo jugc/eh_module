@@ -131,6 +131,16 @@ class HEH_dataset:
         self.testlist        = []
         self.power_col_labels= []
         self.dummy_summary_headers = ["col_1","col_2","col_3","col_1","col_2","vdc","col_7"]
+        self.num_of_reps     = 0
+        self.category_labels = []
+
+    def get_num_repetitions(self):
+        # Calculates the number of repetitions for a given experiment (read dataset).
+        # Since each repetition contains 5 files (summary and four time series),
+        # the length of the file list is divided by 5
+        self.num_of_reps = len(self.filelist)/5
+        self.category_labels = ['rep_' + str(num+1) for num in range(0,self.num_of_reps) ]
+
 
     def save_in_list(self):
         # creates a list with all the file names in the dataset folder
@@ -140,7 +150,8 @@ class HEH_dataset:
         # This method reads each file into a data frame. Then, concatenates each dataframe type (buzzer,mfc,vem,dem)
         # into one big dataframe.
         self.save_in_list()
-
+        self.get_num_repetitions()
+        print self.category_labels
         # Dummy for loop that finds a summary file from the dataset in order to create the list of tests carried out during the experiment
         # These correspond to the speeds of the motor in VDC
         for item in range(0,len(self.filelist)):
@@ -163,20 +174,20 @@ class HEH_dataset:
         # This loop opens each time-series file and saves it into a dataframe with the headers in slef.testlist
         # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
         self.df_dummy_mfc = self.append_df_to_list('MFC')
-        self.df_mfc = pd.concat(self.df_dummy_mfc)
-        self.get_rms_power_2(self.df_mfc,self.rl_mfc)
+        self.df_mfc = pd.concat(self.df_dummy_mfc, keys = ['a','b','c','d','e','f'])
+        self.get_rms_power(self.df_mfc,self.rl_mfc)
 
         self.df_dummy_buzzer = self.append_df_to_list('buzzer')
         self.df_buzzer = pd.concat(self.df_dummy_buzzer)
-        self.get_rms_power_2(self.df_buzzer,self.rl_buzzer)
+        self.get_rms_power(self.df_buzzer,self.rl_buzzer)
 
         self.df_dummy_dem = self.append_df_to_list('DEM')
         self.df_dem = pd.concat(self.df_dummy_dem)
-        self.get_rms_power_2(self.df_dem,self.rl_dem)
+        self.get_rms_power(self.df_dem,self.rl_dem)
 
         self.df_dummy_vem = self.append_df_to_list('VEM')
         self.df_vem = pd.concat(self.df_dummy_vem)
-        self.get_rms_power_2(self.df_vem,self.rl_vem)
+        self.get_rms_power(self.df_vem,self.rl_vem)
 
     def append_df_to_list(self,NAME_EH):
         dummy_list = []
@@ -185,25 +196,24 @@ class HEH_dataset:
             tmp_filename = self.filelist[item]
             if check_filename(tmp_filename,NAME_EH):
                 # loads the time-series data
-                print tmp_filename
                 df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
                 dummy_list.append(df)      #
 
         return dummy_list
 
-    def get_rms_power_2(self,dataframe,rl):
+    def get_rms_power(self,dataframe,rl):
         num_cols = len(dataframe.columns)
 
         new_col_index = num_cols - 1    # because the index starts in 0
         power_col_index = 0
 
         for col in dataframe:
-            dataframe[new_col_index] = (dataframe[col]**2)/rl
+            dataframe[new_col_index] = (1/np.sqrt(2))*(dataframe[col]**2)/rl
             # Renaming the default column name given
             dataframe.rename(columns={new_col_index: self.power_col_labels[power_col_index]}, inplace=True)
             new_col_index = new_col_index + 1
             power_col_index = power_col_index + 1
-        
+
 
     def add_time_column(self):
         NoSamples = len(buzzer_ts_df.index)
@@ -226,44 +236,3 @@ class HEH_dataset:
                 self.dataframes[item].describe()
                 self.dataframes[item]["time(s)"] = np.linspace(0, tmp_time, num=len(self.dataframes[item]["voltage(v)"]))
 '''
-    def eh_stats(self):
-        no_files = len(self.filelist)
-        self.exp_speeds_rpm  = np.empty(no_files/3)
-        self.exp_speeds_vdc  = np.empty(no_files/3)
-        self.max_power_eh    = np.empty(no_files/3)
-        self.max_voltage_eh  = np.empty(no_files/3)
-        self.min_power_eh    = np.empty(no_files/3)
-        self.min_voltage_eh  = np.empty(no_files/3)
-        self.max_power_mfc   = np.empty(no_files/3)
-        self.max_voltage_mfc = np.empty(no_files/3)
-        self.min_power_mfc   = np.empty(no_files/3)
-        self.min_voltage_mfc = np.empty(no_files/3)
-        v_idx_1 = 0
-        v_idx_2 = 0
-        v_idx_3 = 0
-
-        for item in range(0,no_files):
-            if check_filename(self.filelist[item],'MFC'):
-                #print v_idx_1
-                # Get the maximum and minimum values for the last half of the data for the MFC
-                Count                   = self.dataframes[item]['voltage(v)'].count()
-                self.max_voltage_mfc[v_idx_1] = (self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].max())/np.sqrt(2)
-                self.max_power_mfc[v_idx_1]   = ((self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].max()/np.sqrt(2))**2)/self.rl_mfc
-                self.min_power_mfc[v_idx_1]   = ((self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].min()/np.sqrt(2))**2)/self.rl_mfc
-                self.min_voltage_mfc[v_idx_1] = (self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].min())/np.sqrt(2)
-                v_idx_1 = v_idx_1 + 1
-            elif check_filename(self.filelist[item],'EH'):
-                #print v_idx_2
-                Count     = self.dataframes[item]['voltage(v)'].count()
-                self.max_voltage_eh[v_idx_2] = (self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].max())/np.sqrt(2)
-                self.max_power_eh[v_idx_2]   = ((self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].max()/np.sqrt(2))**2)/self.rl_eh
-                self.min_power_eh[v_idx_2]   = ((self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].min()/np.sqrt(2))**2)/self.rl_eh
-                self.min_voltage_eh[v_idx_2] = (self.dataframes[item].loc[0.9*Count:Count]['voltage(v)'].min())/np.sqrt(2)
-                v_idx_2 = v_idx_2 + 1
-            else:
-                Count                  = self.dataframes[item]['velocity(VDC)'].count()
-                self.exp_speeds_rpm[v_idx_3] = 125*self.dataframes[item].loc[0.9*Count:Count]['velocity(VDC)'].mean()
-                self.exp_speeds_vdc[v_idx_3] = self.dataframes[item].loc[0.9*Count:Count]['velocity(VDC)'].mean()
-                v_idx_3 = v_idx_3 + 1
-            if v_idx_1 == no_files and v_idx_2 == no_files and v_idx_3 == no_files:
-                break
