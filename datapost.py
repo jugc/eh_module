@@ -104,7 +104,14 @@ class HEH_dataset:
         self.folder  = FOLDER
         self.filelist = []
         self.dataframes = []
+        self.df_dummy_buzzer = []
+        self.df_dummy_mfc = []
+        self.df_dummy_vem = []
+        self.df_dummy_dem = []
         self.df_buzzer = pd.DataFrame()
+        self.df_mfc = pd.DataFrame()
+        self.df_vem = pd.DataFrame()
+        self.df_dem = pd.DataFrame()
         self.exp_speeds_rpm  = []
         self.exp_speeds_vdc  = []
         self.exp_speeds_hz   = []
@@ -138,7 +145,7 @@ class HEH_dataset:
         for item in range(0,len(self.filelist)):
         # if the file name contains the word s, then it corresponds to a voltage time series
             tmp_filename = self.folder+self.filelist[item]
-            print tmp_filename
+
             if check_filename(tmp_filename,'summary'):
                 df_summary_dummy = pd.read_table(tmp_filename, sep = '\t', names = self.dummy_summary_headers, usecols = ['vdc'])
                 self.exp_speeds_vdc = df_summary_dummy["vdc"]
