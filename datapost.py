@@ -7,54 +7,6 @@ import fnmatch
 from os.path import isfile, join
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
-def read_files_into_data_frames(filename,headers,Fs):
-# Input: filename - list of strings with the names each file
-#        headers - a list of strings where each element is string and corresponds
-#                  to the column header of the summary file
-# Return: - the three dataframes with the modifications such as time column for the time-series
-#           and the headers for the summary
-
-    # for the summary file, only the setting for the speed in v_dc will be included in the dataframe
-    summary_df = pd.read_table(filename[0], sep = '\t', names = headers, usecols = ['vdc'])
-    buzzer_ts_df = pd.read_table(filename[1], sep = '\t', header = None)
-    vem_ts_df = pd.read_table(filename[2], sep = '\t', header = None)
-    mfc_ts_df = pd.read_table(filename[3], sep = '\t', header = None)
-    dem_ts_df = pd.read_table(filename[4], sep = '\t', header = None)
-
-    # Adding the time column to the time-series dataframes
-    NoSamples = len(buzzer_ts_df.index)
-    buzzer_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-    NoSamples = len(vem_ts_df.index)
-    vem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-    NoSamples = len(mfc_ts_df.index)
-    mfc_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-    NoSamples = len(dem_ts_df.index)
-    dem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-    # Adding additional columns for units of speed in the summary dataframe
-    summary_df["rpm"] = summary_df["vdc"]*125.0
-    summary_df["rad/s"] = summary_df["rpm"]*(0.104719755)
-    summary_df["hz"] = summary_df["rpm"]*(1/60.0)
-
-    return summary_df,buzzer_ts_df,vem_ts_df,mfc_ts_df,dem_ts_df
-    #,
-#******************************************************************************
-def get_rms_power(dataframe,rl):
-    num_cols = len(dataframe.columns) - 1   # -1 because the time column is present
-    new_col_index = num_cols - 1    # because the index starts in 0
-
-    for col in dataframe:
-        dataframe[new_col_index] = (dataframe[col]**2)/rl
-        new_col_index = new_col_index + 1
-
-    return dataframe
-#******************************************************************************
-def collect_stats(dataframes):
-    return True
-#******************************************************************************
 def fft_shaker(Ts,y):
     ''' A customized FFT using known algorithms but tailored to the data needs of
     the project.
@@ -98,7 +50,7 @@ def rpm2hz(X):
 
 #---------------------------- Class definition ---------------------------------
 class HEH_dataset:
-    def __init__(self,NAME,FOLDER,rl_mfc,rl_vem,rl_buzzer,rl_dem):
+    def __init__(self,NAME,FOLDER,rl_mfc,rl_vem,rl_buzzer,rl_dem,fs):
         self.data    = []
         self.name    = NAME
         self.folder  = FOLDER
@@ -128,11 +80,14 @@ class HEH_dataset:
         self.rl_vem          = rl_vem
         self.rl_buzzer        = rl_buzzer
         self.rl_dem          = rl_dem
+        self.fs              = fs
         self.testlist        = []
         self.power_col_labels= []
         self.dummy_summary_headers = ["col_1","col_2","col_3","col_1","col_2","vdc","col_7"]
         self.num_of_reps     = 0
         self.category_labels = []
+        self.time            = []
+        self.num_of_samples  = 0
 
     def get_num_repetitions(self):
         # Calculates the number of repetitions for a given experiment (read dataset).
@@ -189,8 +144,12 @@ class HEH_dataset:
         self.df_vem = pd.concat(self.df_dummy_vem)
         self.get_rms_power(self.df_vem,self.rl_vem)
 
+        # Defining the time vector. This is in case it is needed for time-series plotting
+
+
     def append_df_to_list(self,NAME_EH):
         dummy_list = []
+        time_vec_flag = True
         for item in range(0,len(self.filelist)):
         # if the file name contains the word voltage, then it corresponds to a voltage time series
             tmp_filename = self.filelist[item]
@@ -198,15 +157,17 @@ class HEH_dataset:
                 # loads the time-series data
                 df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
                 dummy_list.append(df)      #
+                if time_vec_flag == True:
+                    self.time_vector(tmp_filename)
+                    time_vec_flag = False
+
 
         return dummy_list
 
     def get_rms_power(self,dataframe,rl):
         num_cols = len(dataframe.columns)
-
         new_col_index = num_cols - 1    # because the index starts in 0
         power_col_index = 0
-
         for col in dataframe:
             dataframe[new_col_index] = (1/np.sqrt(2))*(dataframe[col]**2)/rl
             # Renaming the default column name given
@@ -214,25 +175,7 @@ class HEH_dataset:
             new_col_index = new_col_index + 1
             power_col_index = power_col_index + 1
 
-
-    def add_time_column(self):
-        NoSamples = len(buzzer_ts_df.index)
-        buzzer_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-        NoSamples = len(vem_ts_df.index)
-        vem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-        NoSamples = len(mfc_ts_df.index)
-        mfc_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-
-        NoSamples = len(dem_ts_df.index)
-        dem_ts_df["time(s)"] = np.linspace(0,NoSamples/Fs,num=NoSamples)
-        '''
-        #  Add a time column into the data frames that contain de time-series of the voltage from the EH
-        for item in range(0,len(self.filelist)):
-            if not check_filename(self.filelist[item],'voltage'):
-                tmp_time = self.dataframes[item]["time(s)"].max()
-            else:
-                self.dataframes[item].describe()
-                self.dataframes[item]["time(s)"] = np.linspace(0, tmp_time, num=len(self.dataframes[item]["voltage(v)"]))
-'''
+    def time_vector(self,tmp_filename):
+        df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
+        self.num_of_samples = df[self.testlist[0]].count()
+        self.time = np.linspace(0,self.num_of_samples/self.fs,num=self.num_of_samples)
