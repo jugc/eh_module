@@ -174,7 +174,7 @@ class HEH_dataset:
         # This loop opens each time-series file and saves it into a dataframe with the headers in slef.testlist
         # It also savs the summary files into dataframes and converst the speeds from vdc to hz, rpm and rad/s
         self.df_dummy_mfc = self.append_df_to_list('MFC')
-        self.df_mfc = pd.concat(self.df_dummy_mfc, keys = ['a','b','c','d','e','f'])
+        self.df_mfc = pd.concat(self.df_dummy_mfc)
         self.get_rms_power(self.df_mfc,self.rl_mfc)
 
         self.df_dummy_buzzer = self.append_df_to_list('buzzer')
