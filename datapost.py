@@ -157,11 +157,11 @@ class HEH_dataset:
                 # loads the time-series data
                 df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
                 dummy_list.append(df)      #
+                # defining a time vector that correspnds to a time series length. This is the reason why it is inside a loop
+                # of one of the energy harvesters time-series files
                 if time_vec_flag == True:
                     self.time_vector(tmp_filename)
                     time_vec_flag = False
-
-
         return dummy_list
 
     def get_rms_power(self,dataframe,rl):
