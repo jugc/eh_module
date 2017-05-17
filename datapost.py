@@ -5,6 +5,7 @@ import numpy as np
 from os import listdir
 import fnmatch
 from os.path import isfile, join
+from scipy import signal
 #------------------------------- Functions ------------------------------------
 #******************************************************************************
 def fft_shaker(Ts,y):
@@ -28,7 +29,7 @@ def fft_shaker(Ts,y):
     Y = np.fft.fft(y)/N # fft computing and normalization
     Y = Y[range(N/2)]
     frq_Pxx, Pxx = signal.periodogram(y, Fs, 'flattop', scaling='spectrum')
-    return frq_Y,Y,frq_Pxx,Pxx
+    return frq,Y,frq_Pxx,Pxx
 #******************************************************************************
 def check_filename(filename,word):
     if fnmatch.fnmatch(filename, '*_'+word+'*.txt'):
@@ -115,8 +116,8 @@ class HEH_dataset:
 
             if check_filename(tmp_filename,'summary'):
                 df_summary_dummy = pd.read_table(tmp_filename, sep = '\t', names = self.dummy_summary_headers, usecols = ['vdc'])
-                self.exp_speeds_vdc = df_summary_dummy["vdc"]
-                self.exp_speeds_rpm = df_summary_dummy["vdc"]*125.0
+                self.exp_speeds_vdc = df_summary_dummy["vdc"].values
+                self.exp_speeds_rpm = self.exp_speeds_vdc*125.0
                 self.exp_speeds_radsec = self.exp_speeds_rpm*(0.104719755)
                 self.exp_speeds_hz = self.exp_speeds_rpm*(1/60.0)
                 num_of_exp = len(df_summary_dummy['vdc'])
@@ -157,6 +158,7 @@ class HEH_dataset:
                 # loads the time-series data
                 df = pd.read_table(self.folder+tmp_filename, sep = '\t', names = self.testlist)
                 dummy_list.append(df)      #
+
                 # defining a time vector that correspnds to a time series length. This is the reason why it is inside a loop
                 # of one of the energy harvesters time-series files
                 if time_vec_flag == True:
